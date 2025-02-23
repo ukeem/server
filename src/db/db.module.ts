@@ -21,15 +21,16 @@ import { User } from "src/users/models/user.model";
 @Module({
     imports: [
         ConfigModule.forRoot({
+            isGlobal: true,
             envFilePath: [`.env.${process.env.NODE_ENV}`],
         }),
         SequelizeModule.forRoot({
             dialect: "postgres",
-            host: process.env.DB_HOST,
-            port: Number(process.env.DB_PORT),
-            username: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
+            host: process.env.DB_HOST || "localhost",
+            port: Number(process.env.DB_PORT) || 5432,
+            username: process.env.DB_USER || "encaruser",
+            password: process.env.DB_PASSWORD || "Q1234567a@",
+            database: process.env.DB_NAME || "encar",
             autoLoadModels: true, // Автоматическая загрузка моделей
             synchronize: true, // Синхронизация схемы БД (для разработки)
             models: [

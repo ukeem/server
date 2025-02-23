@@ -14,8 +14,8 @@ import { ExchangeModule } from "./exchange/exchange.module";
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: [`.env.${process.env.NODE_ENV}`],
             isGlobal: true,
+            envFilePath: [`.env.${process.env.NODE_ENV}`],
         }),
         DbModule,
         CarsModule,
