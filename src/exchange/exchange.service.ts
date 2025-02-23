@@ -2,8 +2,7 @@
 
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
-import axios from "axios";
-import * as cheerio from "cheerio";
+import puppeteer from "puppeteer";
 import { Exchange } from "./exchange.model";
 import { Cron } from "@nestjs/schedule";
 
@@ -16,28 +15,20 @@ export class ExchangeService implements OnModuleInit {
         private readonly exchangeModel: typeof Exchange
     ) {}
 
-    async fetchExchangeRate(): Promise<number | null> {
-        try {
-            const url = "https://www.google.com/finance/quote/KRW-RUB";
-            const { data } = await axios.get(url, {
-                headers: {
-                    "User-Agent": "Mozilla/5.0", // Моделируем браузер
-                },
-            });
+    async fetchExchangeRate() {
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
+        await page.goto("https://www.google.com/finance/quote/KRW-RUB", {
+            waitUntil: "load",
+        });
 
-            const $ = cheerio.load(data);
+        const rate = await page.evaluate(() => {
+            const el = document.querySelector("div[data-last-price]");
+            return el ? el.getAttribute("data-last-price") : null;
+        });
 
-            // Получаем значение атрибута data-last-price
-            const rateText = $("div[data-last-price]").attr("data-last-price");
-            if (!rateText) throw new Error("Не удалось найти курс");
-
-            const rate = parseFloat(rateText);
-            this.logger.log(`Текущий курс 1 KRW = ${rate} RUB`);
-            return rate;
-        } catch (error) {
-            this.logger.error("Ошибка при парсинге курса:", error);
-            return null;
-        }
+        await browser.close();
+        return rate ? parseFloat(rate) : null;
     }
 
     @Cron("0 0 * * *") // Запуск в 00:00 каждый день
