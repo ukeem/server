@@ -147,22 +147,6 @@ export class CarsService {
                 where: { transmission: response.spec.transmissionName },
             });
 
-            const ex = await this.exchange.findOne({
-                where: { courseId: 1 },
-            });
-
-            if (!ex?.course) {
-                throw new HttpException(
-                    {
-                        message: "Курс валюты не найден в БД",
-                        statusCode: HttpStatus.BAD_REQUEST,
-                    },
-                    HttpStatus.BAD_REQUEST
-                );
-            }
-
-            const course = Number(ex?.course);
-
             const saveData: SaveCarDto = {
                 encarId,
                 mileage: (response.spec.mileage / 1000) * 1000,
@@ -170,8 +154,7 @@ export class CarsService {
                 year: response.category.formYear,
                 price: parseFloat(
                     (
-                        ((response.category.originPrice * 10000 * course) /
-                            100000) *
+                        ((response.category.originPrice * 10000) / 100000) *
                             100000 +
                         500000
                     ).toFixed(0)
@@ -552,6 +535,82 @@ export class CarsService {
         }
     }
 
+    // async getAllCars() {
+    //     try {
+    //         const cars = await this.carModel.findAll({
+    //             attributes: [
+    //                 "id",
+    //                 "encarId",
+    //                 "mileage",
+    //                 "clazz",
+    //                 "year",
+    //                 "price",
+    //                 "createdAt",
+    //             ],
+    //             include: [
+    //                 { model: CarBrand, attributes: ["id", "brand"] },
+    //                 { model: CarBrandModel, attributes: ["id", "model"] },
+    //                 {
+    //                     model: CarBrandModelEdition,
+    //                     attributes: ["id", "edition"],
+    //                 },
+    //                 { model: CarFuel, attributes: ["id", "fuel"] },
+    //                 { model: CarColor, attributes: ["id", "color"] },
+    //                 { model: CarEngine, attributes: ["id", "engine"] },
+    //                 { model: CarBody, attributes: ["id", "body"] },
+    //                 {
+    //                     model: CarTransmission,
+    //                     attributes: ["id", "transmission"],
+    //                 },
+    //                 {
+    //                     model: CarOption,
+    //                     attributes: ["id", "option"],
+    //                     through: { attributes: [] },
+    //                 }, // Убираем данные из таблицы связки many-to-many
+    //                 { model: CarPhoto, attributes: ["id", "photo"] },
+    //             ],
+    //             order: [["createdAt", "DESC"]],
+    //         });
+
+    //         const ex = await this.exchange.findOne({
+    //             where: { courseId: 1 },
+    //         });
+
+    //         if (!ex?.course) {
+    //             throw new HttpException(
+    //                 {
+    //                     message: "Курс валюты не найден в БД",
+    //                     statusCode: HttpStatus.BAD_REQUEST,
+    //                 },
+    //                 HttpStatus.BAD_REQUEST
+    //             );
+    //         }
+
+    //         const course = Number(ex?.course);
+
+    //         if (cars.length === 0) {
+    //             throw new HttpException(
+    //                 {
+    //                     message: "Авто не найдены",
+    //                     statusCode: HttpStatus.NOT_FOUND,
+    //                 },
+    //                 HttpStatus.NOT_FOUND
+    //             );
+    //         }
+
+    //         console.log("Найдено машин:", cars.length);
+    //         return cars;
+    //     } catch (error) {
+    //         throw new HttpException(
+    //             {
+    //                 message: `Ошибка getAllCars: ${error.message}`,
+    //                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+    //             },
+    //             HttpStatus.INTERNAL_SERVER_ERROR
+    //         );
+    //     }
+    // }
+
     async getAllCars() {
         try {
             const cars = await this.carModel.findAll({
@@ -582,8 +641,8 @@ export class CarsService {
                     {
                         model: CarOption,
                         attributes: ["id", "option"],
-                        through: { attributes: [] },
-                    }, // Убираем данные из таблицы связки many-to-many
+                        through: { attributes: [] }, // Убираем данные из таблицы связки many-to-many
+                    },
                     { model: CarPhoto, attributes: ["id", "photo"] },
                 ],
                 order: [["createdAt", "DESC"]],
@@ -591,22 +650,35 @@ export class CarsService {
 
             if (cars.length === 0) {
                 throw new HttpException(
-                    {
-                        message: "Авто не найдены",
-                        statusCode: HttpStatus.NOT_FOUND,
-                    },
+                    "Авто не найдены",
                     HttpStatus.NOT_FOUND
                 );
             }
 
             console.log("Найдено машин:", cars.length);
+
+            const exchangeRate = await this.exchange.findOne({
+                where: { courseId: 1 },
+            });
+
+            if (!exchangeRate?.course) {
+                throw new HttpException(
+                    "Курс валюты не найден в БД",
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            const course = Number(exchangeRate.course);
+
+            // Преобразуем цены и возвращаем обновленный список машин
+            cars.forEach((car) => {
+                car.setDataValue("price", car.price * course);
+            });
+
             return cars;
         } catch (error) {
             throw new HttpException(
-                {
-                    message: `Ошибка getAllCars: ${error.message}`,
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                },
+                `Ошибка getAllCars: ${error.message}`,
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
@@ -629,6 +701,20 @@ export class CarsService {
                     HttpStatus.NOT_FOUND
                 );
             }
+            const exchangeRate = await this.exchange.findOne({
+                where: { courseId: 1 },
+            });
+
+            if (!exchangeRate?.course) {
+                throw new HttpException(
+                    "Курс валюты не найден в БД",
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            const course = Number(exchangeRate.course);
+
+            car.setDataValue("price", car.price * course);
 
             return car;
         } catch (error) {

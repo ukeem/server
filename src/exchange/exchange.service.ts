@@ -18,17 +18,17 @@ export class ExchangeService implements OnModuleInit {
     async fetchExchangeRate() {
         const browser = await puppeteer.launch({ headless: true });
         const page = await browser.newPage();
-        await page.goto("https://www.google.com/finance/quote/KRW-RUB", {
+        await page.goto("https://finance.rambler.ru/currencies/KRW/", {
             waitUntil: "load",
         });
-
+        await page.waitForSelector("span._ZXx92_y.CVUkSwiH");
         const rate = await page.evaluate(() => {
-            const el = document.querySelector("div[data-last-price]");
-            return el ? el.getAttribute("data-last-price") : null;
+            const el = document.querySelector("span._ZXx92_y.CVUkSwiH");
+            return el ? el.textContent?.trim() : null;
         });
 
         await browser.close();
-        return rate ? parseFloat(rate) : null;
+        return rate ? parseFloat(rate) / 1000 : null;
     }
 
     @Cron("0 0 * * *") // Запуск в 00:00 каждый день
