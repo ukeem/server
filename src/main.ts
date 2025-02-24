@@ -14,6 +14,7 @@ async function start() {
     app.use(cors());
 
     app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
     await app.listen(PORT ?? 5000, () => {
         console.log(`Server starting on ${PORT}`);
     });
