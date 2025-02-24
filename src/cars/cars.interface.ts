@@ -18,6 +18,9 @@ export interface IResponseData {
         formYear: number;
         originPrice: number;
     };
+    advertisement: {
+        price: number;
+    };
     spec: {
         mileage: number;
         displacement: number;

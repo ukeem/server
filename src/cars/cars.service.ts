@@ -106,7 +106,7 @@ export class CarsService {
     private async fetchCar(encarId: string) {
         try {
             const response: IResponseData = await this.apiService.fetchData(
-                `${process.env.API_URL}${encarId}?include=CATEGORY,SPEC,PHOTOS,OPTIONS`
+                `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
             );
 
             const [brand] = await this.carBrand.findOrCreate({
@@ -147,18 +147,17 @@ export class CarsService {
                 where: { transmission: response.spec.transmissionName },
             });
 
+            const basePrice =
+                response?.category?.originPrice ??
+                response?.advertisement?.price ??
+                0;
+
             const saveData: SaveCarDto = {
                 encarId,
                 mileage: (response.spec.mileage / 1000) * 1000,
                 clazz: response.category.gradeDetailEnglishName,
                 year: response.category.formYear,
-                price: parseFloat(
-                    (
-                        ((response.category.originPrice * 10000) / 100000) *
-                            100000 +
-                        500000
-                    ).toFixed(0)
-                ),
+                price: Math.round(basePrice * 10000 + 500000),
                 brandId: brand.id,
                 modelId: model.id,
                 editionId: edition.id,
