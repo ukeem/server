@@ -672,6 +672,7 @@ export class CarsService {
                     "price",
                     ((car.price * course) / 10000) * 10000
                 );
+                console.log(((car.price * course) / 10000) * 10000);
             });
 
             return cars;
