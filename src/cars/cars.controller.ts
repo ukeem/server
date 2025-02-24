@@ -26,7 +26,7 @@ import { MaxMileageCarsDto } from "./dto/max-mileage.dto";
 import { TransmissionCarsDto } from "./dto/transmission.dto";
 import { BodyCarsDto } from "./dto/body.dto";
 
-@Controller("api/cars")
+@Controller("cars")
 export class CarsController {
     constructor(private readonly carsService: CarsService) {}
 
