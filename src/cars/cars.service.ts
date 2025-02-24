@@ -670,7 +670,10 @@ export class CarsService {
 
             // Преобразуем цены и возвращаем обновленный список машин
             cars.forEach((car) => {
-                car.setDataValue("price", car.price * course);
+                car.setDataValue(
+                    "price",
+                    ((car.price * course) / 100000) * 100000
+                );
             });
 
             return cars;
