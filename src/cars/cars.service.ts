@@ -649,7 +649,8 @@ export class CarsService {
             });
 
             if (cars.length === 0) {
-                throw new HttpException("Авто не найдены", HttpStatus.ACCEPTED);
+                // throw new HttpException("Авто не найдены", HttpStatus.ACCEPTED);
+                return { message: "Авто не найдены" };
             }
 
             console.log("Найдено машин:", cars.length);
