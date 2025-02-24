@@ -62,7 +62,7 @@ export class ExchangeService implements OnModuleInit {
 
         if (newCourse && course) {
             await course.update({ course: newCourse });
-            this.logger.log("Курс обновлен успешно!");
+            this.logger.log(`Курс обновлен успешно! ${newCourse}`);
         } else {
             this.logger.log("Ошибка обновления курса!");
         }
