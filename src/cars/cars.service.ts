@@ -149,15 +149,14 @@ export class CarsService {
 
             const basePrice =
                 response?.category?.originPrice ??
-                response?.advertisement?.price ??
-                0;
+                response?.advertisement?.price;
 
             const saveData: SaveCarDto = {
                 encarId,
                 mileage: (response.spec.mileage / 1000) * 1000,
                 clazz: response.category.gradeDetailEnglishName,
                 year: response.category.formYear,
-                price: Math.round(basePrice * 10000 + 500000),
+                price: Math.round((basePrice * 10000 + 500000) / 10000) * 10000,
                 brandId: brand.id,
                 modelId: model.id,
                 editionId: edition.id,
