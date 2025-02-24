@@ -10,6 +10,7 @@ const PORT = process.env.PORT;
 
 async function start() {
     const app = await NestFactory.create(AppModule);
+
     app.use(cors());
 
     app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
