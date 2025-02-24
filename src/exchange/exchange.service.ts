@@ -34,7 +34,7 @@ export class ExchangeService implements OnModuleInit {
         return rate ? parseFloat(rate) / 1000 : null;
     }
 
-    @Cron("0 0 * * *") // Запуск в 00:00 каждый день
+    @Cron("0 0 * * *")
     async updateExchangeRate() {
         this.logger.log("Запуск ежедневного обновления курса...");
         const value = await this.fetchExchangeRate();
