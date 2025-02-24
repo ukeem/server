@@ -520,6 +520,27 @@ export class CarsService {
                 );
             }
 
+            const exchangeRate = await this.exchange.findOne({
+                where: { courseId: 1 },
+            });
+
+            if (!exchangeRate?.course) {
+                throw new HttpException(
+                    "Курс валюты не найден в БД",
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            const course = Number(exchangeRate.course);
+
+            // Преобразуем цены и возвращаем обновленный список машин
+            cars.forEach((car) => {
+                car.setDataValue(
+                    "price",
+                    ((car.price * course) / 10000) * 10000
+                );
+            });
+
             console.log("Найдено машин:", cars.length);
             return cars;
         } catch (error) {
@@ -672,7 +693,6 @@ export class CarsService {
                     "price",
                     ((car.price * course) / 10000) * 10000
                 );
-                console.log(((car.price * course) / 10000) * 10000);
             });
 
             return cars;
@@ -714,7 +734,7 @@ export class CarsService {
 
             const course = Number(exchangeRate.course);
 
-            car.setDataValue("price", car.price * course);
+            car.setDataValue("price", ((car.price * course) / 10000) * 10000);
 
             return car;
         } catch (error) {
