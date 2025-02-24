@@ -17,14 +17,6 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { RoleGuard } from "src/role/role.guard";
 import { Roles } from "src/role/role.decorator";
 import { UpdateCarDto } from "./dto/update-car.dto";
-import { MinYearCarsDto } from "./dto/min-year-cars.dto";
-import { MaxYearCarsDto } from "./dto/max-year-cars.dto";
-import { MinEngineCarsDto } from "./dto/min-engine.dto";
-import { MaxEngineCarsDto } from "./dto/max-engine.dto";
-import { MinMileageCarsDto } from "./dto/min-mileage.dto";
-import { MaxMileageCarsDto } from "./dto/max-mileage.dto";
-import { TransmissionCarsDto } from "./dto/transmission.dto";
-import { BodyCarsDto } from "./dto/body.dto";
 
 @Controller("cars")
 export class CarsController {
