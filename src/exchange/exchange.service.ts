@@ -53,15 +53,18 @@ export class ExchangeService implements OnModuleInit {
     }
 
     async onModuleInit() {
-        this.logger.log("Проверка курса в БД при запуске...");
+        this.logger.log("Обновление курса в БД при запуске...");
         const course = await this.exchangeModel.findOne({
             where: { courseId: 1 },
         });
-        if (!course) {
-            this.logger.log("Курс отсутствует в БД, запускаем обновление...");
-            await this.updateExchangeRate();
+
+        const newCourse = await this.fetchExchangeRate();
+
+        if (newCourse && course) {
+            await course.update({ course: newCourse });
+            this.logger.log("Курс обновлен успешно!");
         } else {
-            this.logger.log(`Курс уже есть в БД: ${course.course} RUB.`);
+            this.logger.log("Ошибка обновления курса!");
         }
     }
 }
