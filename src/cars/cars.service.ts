@@ -193,57 +193,73 @@ export class CarsService {
                 `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
             );
 
-            const [brand] = await this.carBrand.findOrCreate({
-                where: { brand: response.category.manufacturerEnglishName },
-                defaults: { brand: response.category.manufacturerEnglishName }, // добавили defaults
-            });
+            const brand =
+                (await this.carBrand.findOne({
+                    where: { brand: response.category.manufacturerEnglishName },
+                })) ||
+                (await this.carBrand.create({
+                    brand: response.category.manufacturerEnglishName,
+                }));
 
-            const [model] = await this.carBrandModel.findOrCreate({
-                where: {
+            const model =
+                (await this.carBrandModel.findOne({
+                    where: {
+                        model: response.category.modelGroupEnglishName,
+                        brandId: brand.id,
+                    },
+                })) ||
+                (await this.carBrandModel.create({
                     model: response.category.modelGroupEnglishName,
                     brandId: brand.id,
-                },
-                defaults: {
-                    model: response.category.modelGroupEnglishName,
-                    brandId: brand.id,
-                },
-            });
+                }));
 
-            const [edition] = await this.carBrandModelEdition.findOrCreate({
-                where: {
+            const edition =
+                (await this.carBrandModelEdition.findOne({
+                    where: {
+                        edition: response.category.gradeEnglishName,
+                        modelId: model.id,
+                    },
+                })) ||
+                (await this.carBrandModelEdition.create({
                     edition: response.category.gradeEnglishName,
                     modelId: model.id,
-                },
-                defaults: {
-                    edition: response.category.gradeEnglishName,
-                    modelId: model.id,
-                },
-            });
+                }));
 
-            const [fuel] = await this.carFuel.findOrCreate({
-                where: { fuel: response.spec.fuelName },
-                defaults: { fuel: response.spec.fuelName },
-            });
+            const fuel =
+                (await this.carFuel.findOne({
+                    where: { fuel: response.spec.fuelName },
+                })) ||
+                (await this.carFuel.create({ fuel: response.spec.fuelName }));
 
-            const [color] = await this.carColor.findOrCreate({
-                where: { color: response.spec.colorName },
-                defaults: { color: response.spec.colorName },
-            });
+            const color =
+                (await this.carColor.findOne({
+                    where: { color: response.spec.colorName },
+                })) ||
+                (await this.carColor.create({
+                    color: response.spec.colorName,
+                }));
 
-            const [engine] = await this.carEngine.findOrCreate({
-                where: { engine: response.spec.displacement },
-                defaults: { engine: response.spec.displacement.toString() },
-            });
+            const engine =
+                (await this.carEngine.findOne({
+                    where: { engine: response.spec.displacement },
+                })) ||
+                (await this.carEngine.create({
+                    engine: response.spec.displacement.toString(),
+                }));
 
-            const [body] = await this.carBody.findOrCreate({
-                where: { body: response.spec.bodyName },
-                defaults: { body: response.spec.bodyName },
-            });
+            const body =
+                (await this.carBody.findOne({
+                    where: { body: response.spec.bodyName },
+                })) ||
+                (await this.carBody.create({ body: response.spec.bodyName }));
 
-            const [transmission] = await this.carTransmission.findOrCreate({
-                where: { transmission: response.spec.transmissionName },
-                defaults: { transmission: response.spec.transmissionName },
-            });
+            const transmission =
+                (await this.carTransmission.findOne({
+                    where: { transmission: response.spec.transmissionName },
+                })) ||
+                (await this.carTransmission.create({
+                    transmission: response.spec.transmissionName,
+                }));
 
             const basePrice =
                 response?.category?.originPrice ??
