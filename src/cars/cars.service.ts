@@ -280,8 +280,8 @@ export class CarsService {
                 engineId: engine.id,
                 bodyId: body.id,
                 transmissionId: transmission.id,
-                photos: response.photos?.map((photo) => photo.path) || [],
-                options: response.options?.standard || [],
+                photos: response.photos.map((photo) => photo.path),
+                options: response.options.standard,
             };
 
             // Сначала сохраняем авто, потом загружаем фото
@@ -1072,5 +1072,19 @@ export class CarsService {
         }
 
         return savedFiles;
+    }
+
+    async deleteEmptyPhotos() {
+        const photos = await this.carPhoto.findAll();
+
+        for (const photo of photos) {
+            if (!photo.photo) {
+                await photo.destroy();
+            }
+        }
+    }
+
+    onModuleInit() {
+        this.deleteEmptyPhotos();
     }
 }
