@@ -1106,28 +1106,28 @@ export class CarsService {
         return savedFiles;
     }
 
-    async deleteEmptyPhotos() {
-        const photos = await this.carPhoto.findAll();
+    // async deleteEmptyPhotos() {
+    //     const photos = await this.carPhoto.findAll();
 
-        for (const photo of photos) {
-            if (!photo.photo) {
-                await photo.destroy();
-            }
-        }
-    }
+    //     for (const photo of photos) {
+    //         if (!photo.photo) {
+    //             await photo.destroy();
+    //         }
+    //     }
+    // }
 
-    async deleteEmptyOptions() {
-        const options = await this.carOption.findAll();
+    // async deleteEmptyOptions() {
+    //     const options = await this.carOption.findAll();
 
-        for (const option of options) {
-            if (!option.option) {
-                await option.destroy();
-            }
-        }
-    }
+    //     for (const option of options) {
+    //         if (!option.option) {
+    //             await option.destroy();
+    //         }
+    //     }
+    // }
 
-    onModuleInit() {
-        this.deleteEmptyPhotos();
-        this.deleteEmptyOptions();
-    }
+    // onModuleInit() {
+    //     this.deleteEmptyPhotos();
+    //     this.deleteEmptyOptions();
+    // }
 }
