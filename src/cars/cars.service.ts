@@ -507,7 +507,7 @@ export class CarsService {
                 ],
                 limit: limit ? Number(limit) : undefined,
                 offset: offset ? Number(offset) : undefined,
-                order: [["createdAt", "DESC"]],
+                order: [["price", "ASC"]],
             });
 
             if (cars.length === 0) {
@@ -537,7 +537,7 @@ export class CarsService {
             cars.forEach((car) => {
                 car.setDataValue(
                     "price",
-                    Math.round(((car.price * course) / 10000) * 10000)
+                    Math.round(((car.price * course) / 100000) * 100000)
                 );
             });
 
