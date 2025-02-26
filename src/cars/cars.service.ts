@@ -1116,7 +1116,18 @@ export class CarsService {
         }
     }
 
+    async deleteEmptyOptions() {
+        const options = await this.carOption.findAll();
+
+        for (const option of options) {
+            if (!option.option) {
+                await option.destroy();
+            }
+        }
+    }
+
     onModuleInit() {
         this.deleteEmptyPhotos();
+        this.deleteEmptyOptions();
     }
 }
