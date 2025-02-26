@@ -9,6 +9,7 @@ import {
     Param,
     Delete,
     UseGuards,
+    Query,
 } from "@nestjs/common";
 import { CarsService } from "./cars.service";
 import { FetchCarDto } from "./dto/fetch-car.dto";
@@ -27,9 +28,17 @@ export class CarsController {
         return this.carsService.filterCars(filterDto);
     }
 
+    // @Get()
+    // async getAllCars() {
+    //     return this.carsService.getAllCars();
+    // }
+
     @Get()
-    async getAllCars() {
-        return this.carsService.getAllCars();
+    async getAllCars(
+        @Query("orderKey") orderKey?: string,
+        @Query("orderValue") orderValue?: string
+    ) {
+        return this.carsService.getAllCars(orderKey, orderValue);
     }
 
     @Get(":id")

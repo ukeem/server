@@ -18,4 +18,6 @@ export class FilterCarDto {
     transmissionIds?: number[];
     limit?: number;
     offset?: number;
+    orderKey?: string;
+    orderValue?: string;
 }

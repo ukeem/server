@@ -383,6 +383,8 @@ export class CarsService {
                 transmissionIds,
                 limit,
                 offset,
+                orderKey = "createdAt",
+                orderValue = "DESC",
             } = filterDto;
 
             const where: any = {};
@@ -507,7 +509,7 @@ export class CarsService {
                 ],
                 limit: limit ? Number(limit) : undefined,
                 offset: offset ? Number(offset) : undefined,
-                order: [["price", "ASC"]],
+                order: [[orderKey, orderValue]],
             });
 
             if (cars.length === 0) {
@@ -630,7 +632,7 @@ export class CarsService {
     //     }
     // }
 
-    async getAllCars() {
+    async getAllCars(orderKey = "createdAt", orderValue = "DESC") {
         try {
             const cars = await this.carModel.findAll({
                 attributes: [
@@ -664,7 +666,7 @@ export class CarsService {
                     },
                     { model: CarPhoto, attributes: ["id", "photo"] },
                 ],
-                order: [["createdAt", "DESC"]],
+                order: [[orderKey, orderValue]],
             });
 
             if (cars.length === 0) {
