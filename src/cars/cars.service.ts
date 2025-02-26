@@ -156,7 +156,8 @@ export class CarsService {
                 mileage: (response.spec.mileage / 1000) * 1000,
                 clazz: response.category.gradeDetailEnglishName,
                 year: response.category.formYear,
-                price: Math.round((basePrice * 10000 + 500000) / 10000) * 10000,
+                price:
+                    Math.round((basePrice * 10000 + 500000) / 100000) * 100000,
                 brandId: brand.id,
                 modelId: model.id,
                 editionId: edition.id,
@@ -856,7 +857,66 @@ export class CarsService {
         }
     }
 
+    // async deleteDublicate() {
+    //     const duplicates = await this.carModel.findAll({
+    //         attributes: [
+    //             "brandId",
+    //             "modelId",
+    //             "editionId",
+    //             "colorId",
+    //             "transmissionId",
+    //             "clazz",
+    //             [Sequelize.fn("COUNT", Sequelize.col("id")), "count"],
+    //         ],
+    //         group: [
+    //             "brandId",
+    //             "modelId",
+    //             "editionId",
+    //             "colorId",
+    //             "transmissionId",
+    //             "clazz",
+    //         ],
+    //         having: Sequelize.literal("COUNT(id) > 1"),
+    //     });
+
+    //     for (const dup of duplicates) {
+    //         const {
+    //             brandId,
+    //             modelId,
+    //             editionId,
+    //             colorId,
+    //             clazz,
+    //             transmissionId,
+    //         } = dup.get();
+
+    //         const carsToDelete = await this.carModel.findAll({
+    //             where: {
+    //                 brandId,
+    //                 modelId,
+    //                 editionId,
+    //                 colorId,
+    //                 clazz,
+    //                 transmissionId,
+    //             },
+    //             include: [{ model: CarPhoto }], // Загружаем фото перед удалением
+    //             order: [["id", "ASC"]],
+    //         });
+
+    //         // Оставляем первый автомобиль, удаляем остальные
+    //         carsToDelete.shift();
+    //         for (const car of carsToDelete) {
+    //             // Удаляем все фото машины перед удалением самой машины
+    //             await CarPhoto.destroy({ where: { carId: car.id } });
+
+    //             // Удаляем машину
+    //             await car.destroy();
+    //         }
+    //     }
+
+    //     console.log("Дубликаты и их фото удалены");
+    // }
     async deleteDublicate() {
+        // Находим дубликаты
         const duplicates = await this.carModel.findAll({
             attributes: [
                 "brandId",
@@ -888,6 +948,7 @@ export class CarsService {
                 transmissionId,
             } = dup.get();
 
+            // Находим все дубликаты, сортируем по id
             const carsToDelete = await this.carModel.findAll({
                 where: {
                     brandId,
@@ -897,18 +958,19 @@ export class CarsService {
                     clazz,
                     transmissionId,
                 },
-                include: [{ model: CarPhoto }], // Загружаем фото перед удалением
+                attributes: ["id"],
                 order: [["id", "ASC"]],
             });
 
-            // Оставляем первый автомобиль, удаляем остальные
-            carsToDelete.shift();
-            for (const car of carsToDelete) {
-                // Удаляем все фото машины перед удалением самой машины
-                await CarPhoto.destroy({ where: { carId: car.id } });
+            if (carsToDelete.length > 1) {
+                // ID машин, которые будем удалять (кроме первой)
+                const idsToDelete = carsToDelete.slice(1).map((car) => car.id);
 
-                // Удаляем машину
-                await car.destroy();
+                // Удаляем фото разом
+                await CarPhoto.destroy({ where: { carId: idsToDelete } });
+
+                // Удаляем машины разом
+                await this.carModel.destroy({ where: { id: idsToDelete } });
             }
         }
 
