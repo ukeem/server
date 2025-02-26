@@ -557,82 +557,6 @@ export class CarsService {
         }
     }
 
-    // async getAllCars() {
-    //     try {
-    //         const cars = await this.carModel.findAll({
-    //             attributes: [
-    //                 "id",
-    //                 "encarId",
-    //                 "mileage",
-    //                 "clazz",
-    //                 "year",
-    //                 "price",
-    //                 "createdAt",
-    //             ],
-    //             include: [
-    //                 { model: CarBrand, attributes: ["id", "brand"] },
-    //                 { model: CarBrandModel, attributes: ["id", "model"] },
-    //                 {
-    //                     model: CarBrandModelEdition,
-    //                     attributes: ["id", "edition"],
-    //                 },
-    //                 { model: CarFuel, attributes: ["id", "fuel"] },
-    //                 { model: CarColor, attributes: ["id", "color"] },
-    //                 { model: CarEngine, attributes: ["id", "engine"] },
-    //                 { model: CarBody, attributes: ["id", "body"] },
-    //                 {
-    //                     model: CarTransmission,
-    //                     attributes: ["id", "transmission"],
-    //                 },
-    //                 {
-    //                     model: CarOption,
-    //                     attributes: ["id", "option"],
-    //                     through: { attributes: [] },
-    //                 }, // Убираем данные из таблицы связки many-to-many
-    //                 { model: CarPhoto, attributes: ["id", "photo"] },
-    //             ],
-    //             order: [["createdAt", "DESC"]],
-    //         });
-
-    //         const ex = await this.exchange.findOne({
-    //             where: { courseId: 1 },
-    //         });
-
-    //         if (!ex?.course) {
-    //             throw new HttpException(
-    //                 {
-    //                     message: "Курс валюты не найден в БД",
-    //                     statusCode: HttpStatus.BAD_REQUEST,
-    //                 },
-    //                 HttpStatus.BAD_REQUEST
-    //             );
-    //         }
-
-    //         const course = Number(ex?.course);
-
-    //         if (cars.length === 0) {
-    //             throw new HttpException(
-    //                 {
-    //                     message: "Авто не найдены",
-    //                     statusCode: HttpStatus.NOT_FOUND,
-    //                 },
-    //                 HttpStatus.NOT_FOUND
-    //             );
-    //         }
-
-    //         console.log("Найдено машин:", cars.length);
-    //         return cars;
-    //     } catch (error) {
-    //         throw new HttpException(
-    //             {
-    //                 message: `Ошибка getAllCars: ${error.message}`,
-    //                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-    //             },
-    //             HttpStatus.INTERNAL_SERVER_ERROR
-    //         );
-    //     }
-    // }
-
     async getAllCars(orderKey = "createdAt", orderValue = "DESC") {
         try {
             const cars = await this.carModel.findAll({
@@ -857,66 +781,7 @@ export class CarsService {
         }
     }
 
-    // async deleteDublicate() {
-    //     const duplicates = await this.carModel.findAll({
-    //         attributes: [
-    //             "brandId",
-    //             "modelId",
-    //             "editionId",
-    //             "colorId",
-    //             "transmissionId",
-    //             "clazz",
-    //             [Sequelize.fn("COUNT", Sequelize.col("id")), "count"],
-    //         ],
-    //         group: [
-    //             "brandId",
-    //             "modelId",
-    //             "editionId",
-    //             "colorId",
-    //             "transmissionId",
-    //             "clazz",
-    //         ],
-    //         having: Sequelize.literal("COUNT(id) > 1"),
-    //     });
-
-    //     for (const dup of duplicates) {
-    //         const {
-    //             brandId,
-    //             modelId,
-    //             editionId,
-    //             colorId,
-    //             clazz,
-    //             transmissionId,
-    //         } = dup.get();
-
-    //         const carsToDelete = await this.carModel.findAll({
-    //             where: {
-    //                 brandId,
-    //                 modelId,
-    //                 editionId,
-    //                 colorId,
-    //                 clazz,
-    //                 transmissionId,
-    //             },
-    //             include: [{ model: CarPhoto }], // Загружаем фото перед удалением
-    //             order: [["id", "ASC"]],
-    //         });
-
-    //         // Оставляем первый автомобиль, удаляем остальные
-    //         carsToDelete.shift();
-    //         for (const car of carsToDelete) {
-    //             // Удаляем все фото машины перед удалением самой машины
-    //             await CarPhoto.destroy({ where: { carId: car.id } });
-
-    //             // Удаляем машину
-    //             await car.destroy();
-    //         }
-    //     }
-
-    //     console.log("Дубликаты и их фото удалены");
-    // }
     async deleteDublicate() {
-        // Находим дубликаты
         const duplicates = await this.carModel.findAll({
             attributes: [
                 "brandId",
@@ -938,6 +803,9 @@ export class CarsService {
             having: Sequelize.literal("COUNT(id) > 1"),
         });
 
+        let totalDeletedCars = 0;
+        let totalDeletedPhotos = 0;
+
         for (const dup of duplicates) {
             const {
                 brandId,
@@ -948,7 +816,7 @@ export class CarsService {
                 transmissionId,
             } = dup.get();
 
-            // Находим все дубликаты, сортируем по id
+            // Получаем все дублирующиеся автомобили, сортируя их по id
             const carsToDelete = await this.carModel.findAll({
                 where: {
                     brandId,
@@ -958,23 +826,35 @@ export class CarsService {
                     clazz,
                     transmissionId,
                 },
-                attributes: ["id"],
                 order: [["id", "ASC"]],
+                attributes: ["id"],
             });
 
             if (carsToDelete.length > 1) {
-                // ID машин, которые будем удалять (кроме первой)
+                // Оставляем первый, остальные удаляем
                 const idsToDelete = carsToDelete.slice(1).map((car) => car.id);
 
-                // Удаляем фото разом
-                await CarPhoto.destroy({ where: { carId: idsToDelete } });
+                // Считаем количество удаляемых фото
+                const deletedPhotos = await this.carPhoto.destroy({
+                    where: { carId: idsToDelete },
+                });
 
-                // Удаляем машины разом
-                await this.carModel.destroy({ where: { id: idsToDelete } });
+                const deletedCars = await this.carModel.destroy({
+                    where: { id: idsToDelete },
+                });
+
+                totalDeletedCars += deletedCars;
+                totalDeletedPhotos += deletedPhotos;
+
+                console.log(
+                    `Удалено ${deletedCars} авто и ${deletedPhotos} фото (brandId: ${brandId}, modelId: ${modelId}, editionId: ${editionId})`
+                );
             }
         }
 
-        console.log("Дубликаты и их фото удалены");
+        console.log(
+            `ИТОГО: удалено ${totalDeletedCars} авто и ${totalDeletedPhotos} фото`
+        );
     }
 
     private async savePhotos(photos: string[]) {
