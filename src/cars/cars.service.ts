@@ -103,90 +103,6 @@ export class CarsService {
         }
     }
 
-    // private async fetchCar(encarId: string) {
-    //     try {
-    //         const response: IResponseData = await this.apiService.fetchData(
-    //             `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
-    //         );
-
-    //         const [brand] = await this.carBrand.findOrCreate({
-    //             where: { brand: response.category.manufacturerEnglishName },
-    //         });
-
-    //         const [model] = await this.carBrandModel.findOrCreate({
-    //             where: {
-    //                 model: response.category.modelGroupEnglishName,
-    //                 brandId: brand.id,
-    //             },
-    //         });
-
-    //         const [edition] = await this.carBrandModelEdition.findOrCreate({
-    //             where: {
-    //                 edition: response.category.gradeEnglishName,
-    //                 modelId: model.id,
-    //             },
-    //         });
-
-    //         const [fuel] = await this.carFuel.findOrCreate({
-    //             where: { fuel: response.spec.fuelName },
-    //         });
-
-    //         const [color] = await this.carColor.findOrCreate({
-    //             where: { color: response.spec.colorName },
-    //         });
-
-    //         const [engine] = await this.carEngine.findOrCreate({
-    //             where: { engine: response.spec.displacement },
-    //         });
-
-    //         const [body] = await this.carBody.findOrCreate({
-    //             where: { body: response.spec.bodyName },
-    //         });
-
-    //         const [transmission] = await this.carTransmission.findOrCreate({
-    //             where: { transmission: response.spec.transmissionName },
-    //         });
-
-    //         const basePrice =
-    //             response?.category?.originPrice ??
-    //             response?.advertisement?.price;
-
-    //         const saveData: SaveCarDto = {
-    //             encarId,
-    //             mileage: (response.spec.mileage / 1000) * 1000,
-    //             clazz: response.category.gradeDetailEnglishName,
-    //             year: response.category.formYear,
-    //             price:
-    //                 Math.round((basePrice * 10000 + 500000) / 100000) * 100000,
-    //             brandId: brand.id,
-    //             modelId: model.id,
-    //             editionId: edition.id,
-    //             fuelId: fuel.id,
-    //             colorId: color.id,
-    //             engineId: engine.id,
-    //             bodyId: body.id,
-    //             transmissionId: transmission.id,
-    //             photos: [
-    //                 ...new Set(response.photos.map((photo) => photo.path)),
-    //             ],
-    //             options: [...response.options.standard],
-    //         };
-
-    //         const savesPhotos = await this.savePhotos(saveData.photos);
-    //         saveData.photos = savesPhotos;
-
-    //         return await this.saveCar(saveData);
-    //     } catch (error) {
-    //         throw new HttpException(
-    //             {
-    //                 message: `Ошибка при получении encarId ${encarId}: ${error.message}`,
-    //                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-    //                 details: error,
-    //             },
-    //             HttpStatus.INTERNAL_SERVER_ERROR
-    //         );
-    //     }
-    // }
     private async fetchCar(encarId: string) {
         try {
             const response: IResponseData = await this.apiService.fetchData(
@@ -280,18 +196,16 @@ export class CarsService {
                 engineId: engine.id,
                 bodyId: body.id,
                 transmissionId: transmission.id,
-                photos: response.photos.map((photo) => photo.path),
-                options: response.options.standard,
+                photos: [
+                    ...new Set(response.photos.map((photo) => photo.path)),
+                ],
+                options: [...response.options.standard],
             };
 
-            // Сначала сохраняем авто, потом загружаем фото
-            const savedCar = await this.saveCar(saveData);
+            const savesPhotos = await this.savePhotos(saveData.photos);
+            saveData.photos = savesPhotos;
 
-            if (saveData.photos.length > 0) {
-                saveData.photos = await this.savePhotos(saveData.photos);
-            }
-
-            return savedCar;
+            return await this.saveCar(saveData);
         } catch (error) {
             throw new HttpException(
                 {
@@ -303,6 +217,124 @@ export class CarsService {
             );
         }
     }
+    // private async fetchCar(encarId: string) {
+    //     try {
+    //         const response: IResponseData = await this.apiService.fetchData(
+    //             `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
+    //         );
+
+    //         const brand =
+    //             (await this.carBrand.findOne({
+    //                 where: { brand: response.category.manufacturerEnglishName },
+    //             })) ||
+    //             (await this.carBrand.create({
+    //                 brand: response.category.manufacturerEnglishName,
+    //             }));
+
+    //         const model =
+    //             (await this.carBrandModel.findOne({
+    //                 where: {
+    //                     model: response.category.modelGroupEnglishName,
+    //                     brandId: brand.id,
+    //                 },
+    //             })) ||
+    //             (await this.carBrandModel.create({
+    //                 model: response.category.modelGroupEnglishName,
+    //                 brandId: brand.id,
+    //             }));
+
+    //         const edition =
+    //             (await this.carBrandModelEdition.findOne({
+    //                 where: {
+    //                     edition: response.category.gradeEnglishName,
+    //                     modelId: model.id,
+    //                 },
+    //             })) ||
+    //             (await this.carBrandModelEdition.create({
+    //                 edition: response.category.gradeEnglishName,
+    //                 modelId: model.id,
+    //             }));
+
+    //         const fuel =
+    //             (await this.carFuel.findOne({
+    //                 where: { fuel: response.spec.fuelName },
+    //             })) ||
+    //             (await this.carFuel.create({ fuel: response.spec.fuelName }));
+
+    //         const color =
+    //             (await this.carColor.findOne({
+    //                 where: { color: response.spec.colorName },
+    //             })) ||
+    //             (await this.carColor.create({
+    //                 color: response.spec.colorName,
+    //             }));
+
+    //         const engine =
+    //             (await this.carEngine.findOne({
+    //                 where: { engine: response.spec.displacement },
+    //             })) ||
+    //             (await this.carEngine.create({
+    //                 engine: response.spec.displacement.toString(),
+    //             }));
+
+    //         const body =
+    //             (await this.carBody.findOne({
+    //                 where: { body: response.spec.bodyName },
+    //             })) ||
+    //             (await this.carBody.create({ body: response.spec.bodyName }));
+
+    //         const transmission =
+    //             (await this.carTransmission.findOne({
+    //                 where: { transmission: response.spec.transmissionName },
+    //             })) ||
+    //             (await this.carTransmission.create({
+    //                 transmission: response.spec.transmissionName,
+    //             }));
+
+    //         const basePrice =
+    //             response?.category?.originPrice ??
+    //             response?.advertisement?.price;
+
+    //         const saveData: SaveCarDto = {
+    //             encarId,
+    //             mileage: (response.spec.mileage / 1000) * 1000,
+    //             clazz: response.category.gradeDetailEnglishName,
+    //             year: response.category.formYear,
+    //             price:
+    //                 Math.round((basePrice * 10000 + 500000) / 100000) * 100000,
+    //             brandId: brand.id,
+    //             modelId: model.id,
+    //             editionId: edition.id,
+    //             fuelId: fuel.id,
+    //             colorId: color.id,
+    //             engineId: engine.id,
+    //             bodyId: body.id,
+    //             transmissionId: transmission.id,
+    //             photos: [
+    //                 ...new Set(response.photos.map((photo) => photo.path)),
+    //             ],
+    //             options: [...response.options.standard],
+    //         };
+
+    //         // Сначала сохраняем авто, потом загружаем фото
+    //         const savedCar = await this.saveCar(saveData);
+
+    //         if (saveData.photos.length > 0) {
+    //             saveData.photos = await this.savePhotos(saveData.photos);
+    //         }
+
+    //         return savedCar;
+    //     } catch (error) {
+    //         throw new HttpException(
+    //             {
+    //                 message: `Ошибка при получении encarId ${encarId}: ${error.message}`,
+    //                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+    //                 details: error,
+    //             },
+    //             HttpStatus.INTERNAL_SERVER_ERROR
+    //         );
+    //     }
+    // }
 
     private async saveCar(saveCarDto: SaveCarDto) {
         const {
