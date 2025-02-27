@@ -207,9 +207,17 @@ export class CarsService {
                 options: [...response.options.standard],
             };
 
-            const savesPhotos = await this.savePhotos(saveData.photos);
-            saveData.photos = savesPhotos;
-            console.log(saveData.photos);
+            if (!saveData.photos.length) {
+                throw new HttpException(
+                    {
+                        message: `Ошибка при получении encarId ${encarId}: нет фото`,
+                        statusCode: HttpStatus.NOT_FOUND,
+                    },
+                    HttpStatus.NOT_FOUND
+                );
+            }
+
+            saveData.photos = await this.savePhotos(saveData.photos);
 
             return await this.saveCar(saveData);
         } catch (error) {
@@ -369,6 +377,27 @@ export class CarsService {
             throw new HttpException(
                 {
                     message: `Авто с ${existingEncarId.encarId} есть в БД`,
+                    statusCode: HttpStatus.CONFLICT,
+                },
+                HttpStatus.CONFLICT
+            );
+        }
+
+        const existingCar = await this.carModel.findOne({
+            where: {
+                brandId,
+                modelId,
+                editionId,
+                colorId,
+                transmissionId,
+                clazz,
+            },
+        });
+
+        if (existingCar) {
+            throw new HttpException(
+                {
+                    message: `Авто с ${existingCar.encarId} есть в БД`,
                     statusCode: HttpStatus.CONFLICT,
                 },
                 HttpStatus.CONFLICT
