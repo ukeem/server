@@ -24,7 +24,6 @@ import { UpdateCarDto } from "./dto/update-car.dto";
 import * as fs from "fs";
 import * as path from "path";
 import { Exchange } from "src/exchange/exchange.model";
-import { Logger } from "@nestjs/common";
 
 @Injectable()
 export class CarsService {
@@ -55,8 +54,7 @@ export class CarsService {
         private readonly exchange: typeof Exchange,
         @InjectModel(CarCarOption)
         private readonly carCarOption: typeof CarCarOption,
-        private readonly apiService: ApiService,
-        private readonly logger = new Logger(CarsService.name)
+        private readonly apiService: ApiService
     ) {}
 
     async fetchAllCars(fetchCarDto: FetchCarDto) {
@@ -107,7 +105,6 @@ export class CarsService {
             );
 
             if (!response) {
-                this.logger.error(`Ошибка при получении encarId ${encarId}`);
                 throw new HttpException(
                     {
                         message: `Ошибка при получении encarId ${encarId}: ${response}`,
@@ -216,10 +213,6 @@ export class CarsService {
 
             return await this.saveCar(saveData);
         } catch (error) {
-            this.logger.error(
-                `Error fetching car with encarId ${encarId}`,
-                error.stack
-            );
             throw new HttpException(
                 {
                     message: `Ошибка при получении encarId ${encarId}: ${error.message}`,
@@ -373,7 +366,6 @@ export class CarsService {
         });
 
         if (existingEncarId) {
-            this.logger.warn(`Car with encarId ${encarId} already exists`);
             throw new HttpException(
                 {
                     message: `Авто с ${existingEncarId.encarId} есть в БД`,
@@ -521,10 +513,6 @@ export class CarsService {
                 ],
             });
         } catch (error) {
-            this.logger.error(
-                `Error saving car with encarId ${encarId}`,
-                error.stack
-            );
             throw new HttpException(
                 {
                     message: `Ошибка при сохранении авто ${encarId}`,
@@ -1084,7 +1072,7 @@ export class CarsService {
             }
         }
 
-        this.logger.log(`Удалено дубликатов: ${duplicates.length}`);
+        console.log(`Удалено ${duplicates.length} дубликатов`);
     }
 
     private async savePhotos(photos: string[]) {
