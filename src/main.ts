@@ -5,11 +5,15 @@ import { AppModule } from "./app.module";
 import * as express from "express";
 import * as path from "path";
 import * as cors from "cors";
+import { Sequelize } from "sequelize-typescript";
 
 const PORT = process.env.PORT;
 
 async function start() {
     const app = await NestFactory.create(AppModule);
+
+    const sequelize = app.get(Sequelize);
+    await sequelize.sync({ alter: true });
 
     app.use(cors());
 

@@ -32,7 +32,7 @@ import { User } from "src/users/models/user.model";
             password: process.env.DB_PASSWORD || "Q1234567a@",
             database: process.env.DB_NAME || "encar",
             autoLoadModels: true, // Автоматическая загрузка моделей
-            synchronize: true, // Синхронизация схемы БД (для разработки)
+            synchronize: false, // Синхронизация схемы БД (для разработки)
             models: [
                 Car,
                 CarBrand,
@@ -44,10 +44,10 @@ import { User } from "src/users/models/user.model";
                 CarFuel,
                 CarTransmission,
                 CarPhoto,
-                CarOption,
-                CarCarOption,
                 User,
                 Exchange,
+                CarOption,
+                CarCarOption,
             ],
         }),
     ],
