@@ -719,7 +719,7 @@ export class CarsService {
             cars.forEach((car) => {
                 car.setDataValue(
                     "price",
-                    Math.round(((car.price * course) / 100000) * 100000)
+                    Math.round((car.price * course) / 100000) * 100000
                 );
             });
 
@@ -797,7 +797,7 @@ export class CarsService {
             cars.forEach((car) => {
                 car.setDataValue(
                     "price",
-                    Math.round(((car.price * course) / 10000) * 10000)
+                    Math.round((car.price * course) / 100000) * 100000
                 );
             });
 
@@ -842,7 +842,7 @@ export class CarsService {
 
             car.setDataValue(
                 "price",
-                Math.round(((car.price * course) / 10000) * 10000)
+                Math.round((car.price * course) / 100000) * 100000
             );
 
             return car;
