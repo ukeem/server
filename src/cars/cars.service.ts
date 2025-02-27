@@ -202,7 +202,7 @@ export class CarsService {
 
             const saveData: SaveCarDto = {
                 encarId,
-                mileage: (response.spec.mileage / 1000) * 1000,
+                mileage: Math.round(response.spec.mileage),
                 clazz: response.category.gradeDetailEnglishName,
                 year: response.category.formYear,
                 price: Math.round((basePrice * 10000) / 100000) * 100000,
