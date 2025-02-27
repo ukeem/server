@@ -72,7 +72,10 @@ export class CarsService {
             if (carIds.length === 0) {
                 return "Введите Encar ID";
             }
-            const results = await Promise.allSettled(
+            // const results = await Promise.allSettled(
+            //     carIds.map((carId) => this.fetchCar(carId))
+            // );
+            const results = await Promise.all(
                 carIds.map((carId) => this.fetchCar(carId))
             );
 
