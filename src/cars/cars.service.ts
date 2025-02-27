@@ -369,37 +369,6 @@ export class CarsService {
             );
         }
 
-        const duplicates = await this.carModel.findAll({
-            attributes: [
-                "brandId",
-                "modelId",
-                "editionId",
-                "colorId",
-                "transmissionId",
-                "clazz",
-                [Sequelize.fn("COUNT", Sequelize.col("id")), "count"],
-            ],
-            group: [
-                "brandId",
-                "modelId",
-                "editionId",
-                "colorId",
-                "transmissionId",
-                "clazz",
-            ],
-            having: Sequelize.literal("COUNT(id) > 1"),
-        });
-
-        if (duplicates.length > 0) {
-            throw new HttpException(
-                {
-                    message: `Найдены похожие авто в БД`,
-                    statusCode: HttpStatus.CONFLICT,
-                },
-                HttpStatus.CONFLICT
-            );
-        }
-
         try {
             const car = await this.carModel.create({
                 encarId,
