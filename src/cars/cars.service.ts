@@ -18,20 +18,12 @@ import { InjectModel } from "@nestjs/sequelize";
 import { SaveCarDto } from "./dto/save-car.dto";
 import { CarOption } from "./models/carOption.model";
 import { CarCarOption } from "./models/carCarOption.model";
-import { Op, Sequelize, WhereOptions } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { FilterCarDto } from "./dto/filter-car.dto";
 import { UpdateCarDto } from "./dto/update-car.dto";
 import * as fs from "fs";
 import * as path from "path";
 import { Exchange } from "src/exchange/exchange.model";
-import { MinYearCarsDto } from "./dto/min-year-cars.dto";
-import { MaxYearCarsDto } from "./dto/max-year-cars.dto";
-import { MinEngineCarsDto } from "./dto/min-engine.dto";
-import { MaxEngineCarsDto } from "./dto/max-engine.dto";
-import { MinMileageCarsDto } from "./dto/min-mileage.dto";
-import { MaxMileageCarsDto } from "./dto/max-mileage.dto";
-import { BodyCarsDto } from "./dto/body.dto";
-import { TransmissionCarsDto } from "./dto/transmission.dto";
 
 @Injectable()
 export class CarsService {
@@ -111,6 +103,16 @@ export class CarsService {
             const response: IResponseData = await this.apiService.fetchData(
                 `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
             );
+
+            if (!response) {
+                throw new HttpException(
+                    {
+                        message: `Ошибка при получении encarId ${encarId}: ${response}`,
+                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                    },
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                );
+            }
 
             const brand =
                 (await this.carBrand.findOne({
@@ -405,9 +407,15 @@ export class CarsService {
 
                     if (!optionName) return null; // Если опция неизвестна, пропускаем
 
-                    const [createdOption] = await this.carOption.findOrCreate({
+                    let createdOption = await this.carOption.findOne({
                         where: { option: optionName },
                     });
+
+                    if (!createdOption) {
+                        createdOption = await this.carOption.create({
+                            option: optionName,
+                        });
+                    }
 
                     return createdOption.id; // Возвращаем ID созданной опции
                 })
