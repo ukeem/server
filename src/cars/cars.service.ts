@@ -396,26 +396,26 @@ export class CarsService {
             );
         }
 
-        const existingCar = await this.carModel.findOne({
-            where: {
-                brandId,
-                modelId,
-                editionId,
-                colorId,
-                transmissionId,
-                clazz,
-            },
-        });
+        // const existingCar = await this.carModel.findOne({
+        //     where: {
+        //         brandId,
+        //         modelId,
+        //         editionId,
+        //         colorId,
+        //         transmissionId,
+        //         clazz,
+        //     },
+        // });
 
-        if (existingCar) {
-            throw new HttpException(
-                {
-                    message: `Авто с ${existingCar.encarId} есть в БД`,
-                    statusCode: HttpStatus.CONFLICT,
-                },
-                HttpStatus.CONFLICT
-            );
-        }
+        // if (existingCar) {
+        //     throw new HttpException(
+        //         {
+        //             message: `Авто с ${existingCar.encarId} есть в БД`,
+        //             statusCode: HttpStatus.CONFLICT,
+        //         },
+        //         HttpStatus.CONFLICT
+        //     );
+        // }
 
         try {
             const car = await this.carModel.create({
