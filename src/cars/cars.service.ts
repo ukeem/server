@@ -78,12 +78,12 @@ export class CarsService {
 
             console.log(`Добавлено машин: ${results.length}`);
 
-            await this.deleteDublicate();
-            const ex = await this.exchange.findOne({
-                where: { courseId: 1 },
-            });
-            const course = parseFloat(Number(ex?.course).toFixed(4));
-            console.log(ex?.course, typeof course, course);
+            // await this.deleteDublicate();
+            // const ex = await this.exchange.findOne({
+            //     where: { courseId: 1 },
+            // });
+            // const course = parseFloat(Number(ex?.course).toFixed(4));
+            // console.log(ex?.course, typeof course, course);
 
             const cars = await this.carModel.findAll();
             return cars;
