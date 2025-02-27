@@ -64,16 +64,16 @@ export class CarsService {
             if (carIds.length === 0) {
                 return "Введите Encar ID";
             }
-            const results = await Promise.allSettled(
-                carIds.map((carId) => this.fetchCar(carId))
-            );
+            // const results = await Promise.allSettled(
+            //     carIds.map((carId) => this.fetchCar(carId))
+            // );
             // const results = await Promise.all(
             //     carIds.map((carId) => this.fetchCar(carId))
             // );
 
-            // carIds.map(async (carId) => await this.fetchCar(carId));
+            carIds.map(async (carId) => await this.fetchCar(carId));
 
-            console.log(`Добавлено машин: ${results.length}`);
+            // console.log(`Добавлено машин: ${results.length}`);
 
             await this.deleteDublicate();
             // const ex = await this.exchange.findOne({
