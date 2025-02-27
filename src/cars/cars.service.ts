@@ -67,11 +67,13 @@ export class CarsService {
             // const results = await Promise.allSettled(
             //     carIds.map((carId) => this.fetchCar(carId))
             // );
-            const results = await Promise.allSettled(
-                carIds.map((carId) => this.fetchCar(carId))
-            );
+            // const results = await Promise.all(
+            //     carIds.map((carId) => this.fetchCar(carId))
+            // );
 
-            console.log(`Добавлено машин: ${results.length}`);
+            carIds.map(async (carId) => await this.fetchCar(carId));
+
+            console.log(`Добавлено машин: ${carIds.length}`);
 
             // await this.deleteDublicate();
             // const ex = await this.exchange.findOne({
@@ -107,10 +109,10 @@ export class CarsService {
             if (!response) {
                 throw new HttpException(
                     {
-                        message: `Ошибка при получении encarId ${encarId}: ${response}`,
-                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        message: `Ошибка при получении encarId ${encarId}`,
+                        statusCode: HttpStatus.NOT_FOUND,
                     },
-                    HttpStatus.INTERNAL_SERVER_ERROR
+                    HttpStatus.NOT_FOUND
                 );
             }
 
