@@ -31,7 +31,6 @@ export class CarBrandModelEdition extends Model<
     id: number;
 
     @AllowNull(false)
-    @Unique
     @Column
     edition: string;
 
