@@ -204,6 +204,7 @@ export class CarsService {
 
             const savesPhotos = await this.savePhotos(saveData.photos);
             saveData.photos = savesPhotos;
+            console.log(saveData.photos);
 
             return await this.saveCar(saveData);
         } catch (error) {
