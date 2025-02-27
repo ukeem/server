@@ -114,85 +114,96 @@ export class CarsService {
                 );
             }
 
-            const brand =
-                (await this.carBrand.findOne({
-                    where: { brand: response.category.manufacturerEnglishName },
-                })) ||
-                (await this.carBrand.create({
+            let brand = await this.carBrand.findOne({
+                where: { brand: response.category.manufacturerEnglishName },
+            });
+            if (!brand) {
+                brand = await this.carBrand.create({
                     brand: response.category.manufacturerEnglishName,
-                }));
+                });
+            }
 
-            const model =
-                (await this.carBrandModel.findOne({
-                    where: {
-                        model: response.category.modelGroupEnglishName,
-                        brandId: brand.id,
-                    },
-                })) ||
-                (await this.carBrandModel.create({
+            let model = await this.carBrandModel.findOne({
+                where: {
                     model: response.category.modelGroupEnglishName,
                     brandId: brand.id,
-                }));
+                },
+            });
+            if (!model) {
+                model = await this.carBrandModel.create({
+                    model: response.category.modelGroupEnglishName,
+                    brandId: brand.id,
+                });
+            }
 
-            const edition =
-                (await this.carBrandModelEdition.findOne({
-                    where: {
-                        edition: response.category.gradeEnglishName,
-                        modelId: model.id,
-                    },
-                })) ||
-                (await this.carBrandModelEdition.create({
+            let edition = await this.carBrandModelEdition.findOne({
+                where: {
                     edition: response.category.gradeEnglishName,
                     modelId: model.id,
-                }));
+                },
+            });
+            if (!edition) {
+                edition = await this.carBrandModelEdition.create({
+                    edition: response.category.gradeEnglishName,
+                    modelId: model.id,
+                });
+            }
 
-            const fuel =
-                (await this.carFuel.findOne({
-                    where: { fuel: response.spec.fuelName },
-                })) ||
-                (await this.carFuel.create({ fuel: response.spec.fuelName }));
+            let fuel = await this.carFuel.findOne({
+                where: { fuel: response.spec.fuelName },
+            });
+            if (!fuel) {
+                fuel = await this.carFuel.create({
+                    fuel: response.spec.fuelName,
+                });
+            }
 
-            const color =
-                (await this.carColor.findOne({
-                    where: { color: response.spec.colorName },
-                })) ||
-                (await this.carColor.create({
+            let color = await this.carColor.findOne({
+                where: { color: response.spec.colorName },
+            });
+            if (!color) {
+                color = await this.carColor.create({
                     color: response.spec.colorName,
-                }));
+                });
+            }
 
-            const engine =
-                (await this.carEngine.findOne({
-                    where: { engine: response.spec.displacement },
-                })) ||
-                (await this.carEngine.create({
+            let engine = await this.carEngine.findOne({
+                where: { engine: response.spec.displacement },
+            });
+            if (!engine) {
+                engine = await this.carEngine.create({
                     engine: response.spec.displacement.toString(),
-                }));
+                });
+            }
 
-            const body =
-                (await this.carBody.findOne({
-                    where: { body: response.spec.bodyName },
-                })) ||
-                (await this.carBody.create({ body: response.spec.bodyName }));
+            let body = await this.carBody.findOne({
+                where: { body: response.spec.bodyName },
+            });
+            if (!body) {
+                body = await this.carBody.create({
+                    body: response.spec.bodyName,
+                });
+            }
 
-            const transmission =
-                (await this.carTransmission.findOne({
-                    where: { transmission: response.spec.transmissionName },
-                })) ||
-                (await this.carTransmission.create({
+            let transmission = await this.carTransmission.findOne({
+                where: { transmission: response.spec.transmissionName },
+            });
+            if (!transmission) {
+                transmission = await this.carTransmission.create({
                     transmission: response.spec.transmissionName,
-                }));
+                });
+            }
 
             const basePrice =
-                response?.category?.originPrice ??
-                response?.advertisement?.price;
+                response?.advertisement?.price ??
+                response?.category?.originPrice;
 
             const saveData: SaveCarDto = {
                 encarId,
                 mileage: (response.spec.mileage / 1000) * 1000,
                 clazz: response.category.gradeDetailEnglishName,
                 year: response.category.formYear,
-                price:
-                    Math.round((basePrice * 10000 + 500000) / 100000) * 100000,
+                price: Math.round((basePrice * 10000) / 100000) * 100000,
                 brandId: brand.id,
                 modelId: model.id,
                 editionId: edition.id,
@@ -729,7 +740,7 @@ export class CarsService {
             cars.forEach((car) => {
                 car.setDataValue(
                     "price",
-                    Math.round((car.price * course) / 100000) * 100000
+                    Math.round((car.price * course + 500000) / 100000) * 100000
                 );
             });
 
@@ -807,7 +818,7 @@ export class CarsService {
             cars.forEach((car) => {
                 car.setDataValue(
                     "price",
-                    Math.round((car.price * course) / 100000) * 100000
+                    Math.round((car.price * course + 500000) / 100000) * 100000
                 );
             });
 
@@ -852,7 +863,7 @@ export class CarsService {
 
             car.setDataValue(
                 "price",
-                Math.round((car.price * course) / 100000) * 100000
+                Math.round((car.price * course + 500000) / 100000) * 100000
             );
 
             return car;
