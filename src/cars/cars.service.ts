@@ -64,16 +64,16 @@ export class CarsService {
             if (carIds.length === 0) {
                 return "Введите Encar ID";
             }
-            // const results = await Promise.allSettled(
-            //     carIds.map((carId) => this.fetchCar(carId))
-            // );
-            const results = await Promise.all(
+            const results = await Promise.allSettled(
                 carIds.map((carId) => this.fetchCar(carId))
             );
+            // const results = await Promise.all(
+            //     carIds.map((carId) => this.fetchCar(carId))
+            // );
 
             console.log(`Добавлено машин: ${results.length}`);
 
-            // await this.deleteDublicate();
+            await this.deleteDublicate();
             // const ex = await this.exchange.findOne({
             //     where: { courseId: 1 },
             // });
@@ -1072,7 +1072,7 @@ export class CarsService {
             }
         }
 
-        console.log("Дубликаты и их фото удалены");
+        console.log(`Удалено дубликатов: ${duplicates.length}`);
     }
 
     private async savePhotos(photos: string[]) {
