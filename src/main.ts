@@ -12,8 +12,8 @@ const PORT = process.env.PORT;
 async function start() {
     const app = await NestFactory.create(AppModule);
 
-    const sequelize = app.get(Sequelize);
-    await sequelize.sync({ alter: true });
+    // const sequelize = app.get(Sequelize);
+    // await sequelize.sync({ alter: true });
 
     app.use(cors());
 

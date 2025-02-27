@@ -20,4 +20,5 @@ export class FilterCarDto {
     offset?: number;
     orderKey?: string;
     orderValue?: string;
+    encarId?: string;
 }

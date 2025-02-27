@@ -588,6 +588,7 @@ export class CarsService {
                 offset,
                 orderKey = "createdAt",
                 orderValue = "DESC",
+                encarId,
             } = filterDto;
 
             const where: any = {};
@@ -674,6 +675,11 @@ export class CarsService {
             // Коробка передач
             if (transmissionIds) {
                 where.transmissionId = { [Op.in]: transmissionIds };
+            }
+
+            // Коробка передач
+            if (encarId) {
+                where.encarId;
             }
 
             // Запрос в БД
