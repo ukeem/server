@@ -75,7 +75,7 @@ export class CarsService {
 
             console.log(`Добавлено машин: ${results.length}`);
 
-            // await this.deleteDublicate();
+            await this.deleteDublicate();
             // const ex = await this.exchange.findOne({
             //     where: { courseId: 1 },
             // });
