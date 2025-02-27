@@ -15,6 +15,9 @@ async function start() {
     // const sequelize = app.get(Sequelize);
     // await sequelize.sync({ alter: true });
 
+    const server = app.getHttpServer();
+    server.setTimeout(3000000);
+
     app.use(cors());
 
     app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
