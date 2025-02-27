@@ -82,8 +82,8 @@ export class CarsService {
             // const course = parseFloat(Number(ex?.course).toFixed(4));
             // console.log(ex?.course, typeof course, course);
 
-            // const cars = await this.carModel.findAll();
-            return results;
+            const cars = await this.carModel.findAll();
+            return cars;
             // return results.map((result) =>
             //     result.status === "fulfilled"
             //         ? result.value
