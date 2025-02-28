@@ -857,6 +857,7 @@ export class CarsService {
                         attributes: ["id", "option"],
                         through: { attributes: [] }, // Убираем данные из таблицы связки many-to-many
                     },
+                    { model: CarPhoto, attributes: ["id", "photo"] },
                 ],
             });
 
