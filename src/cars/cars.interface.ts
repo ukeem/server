@@ -58,3 +58,7 @@ export interface ICarData {
 
 export interface CarCreationAttributes
     extends Optional<Car, NullishPropertiesOf<Car>> {}
+
+export interface MaxEncarIdResult {
+    maxEncarId: number | null;
+}

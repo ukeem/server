@@ -3,7 +3,7 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { FetchCarDto } from "./dto/fetch-car.dto";
 import { ApiService } from "src/api/api.service";
-import { IResponseData } from "./cars.interface";
+import { IResponseData, MaxEncarIdResult } from "./cars.interface";
 import { Car } from "./models/car.model";
 import { CarBrand } from "./models/carBrand.model";
 import { CarBrandModel } from "./models/carBrandModel.model";
@@ -24,6 +24,8 @@ import { UpdateCarDto } from "./dto/update-car.dto";
 import * as fs from "fs";
 import * as path from "path";
 import { Exchange } from "src/exchange/exchange.model";
+import { Literal } from "sequelize/types/utils";
+import e from "express";
 
 @Injectable()
 export class CarsService {
@@ -231,6 +233,8 @@ export class CarsService {
             }
 
             saveData.photos = await this.savePhotos(saveData.photos);
+
+            console.log(`Сохранен авто с encarId ${encarId}`);
 
             return await this.saveCar(saveData);
         } catch (error) {
@@ -1158,28 +1162,99 @@ export class CarsService {
         return savedFiles;
     }
 
-    // async deleteEmptyPhotos() {
-    //     const photos = await this.carPhoto.findAll();
+    private async findMaxEncarId(): Promise<string> {
+        let encarId = await this.carModel.findOne({
+            attributes: ["encarId"],
+            order: [["encarId", "DESC"]],
+            raw: true,
+        });
 
-    //     for (const photo of photos) {
-    //         if (!photo.photo) {
-    //             await photo.destroy();
-    //         }
-    //     }
-    // }
+        while (encarId && String(encarId.encarId).length < 8) {
+            encarId = await this.carModel.findOne({
+                attributes: ["encarId"],
+                order: [["encarId", "DESC"]],
+                where: { encarId: { [Op.lt]: encarId.encarId } }, // Берем следующий меньший
+                raw: true,
+            });
+        }
 
-    // async deleteEmptyOptions() {
-    //     const options = await this.carOption.findAll();
+        if (!encarId || !encarId.encarId) {
+            return "Максимальный encarId не найден";
+        }
 
-    //     for (const option of options) {
-    //         if (!option.option) {
-    //             await option.destroy();
-    //         }
-    //     }
-    // }
+        return String(encarId.encarId);
+    }
 
-    // onModuleInit() {
-    //     this.deleteEmptyPhotos();
-    //     this.deleteEmptyOptions();
-    // }
+    private async findEncarIds(maxEncarId: number): Promise<FetchCarDto> {
+        let encarId = maxEncarId;
+        const encarIds: string[] = [];
+        let errorCount = 0;
+
+        while (errorCount < 50) {
+            encarId++;
+
+            try {
+                const response = await this.apiService.fetchData(
+                    `${process.env.API_URL}${encarId}?include=CATEGORY,ADVERTISEMENT,SPEC,PHOTOS,OPTIONS`
+                );
+
+                const formYear = response?.category?.formYear;
+
+                if (formYear && formYear > 2020) {
+                    await this.fetchCar(encarId.toString());
+                    encarIds.push(encarId.toString());
+                }
+
+                errorCount = 0; // Сбрасываем счетчик ошибок после успешного запроса
+            } catch (error) {
+                errorCount++;
+                console.error(
+                    `Ошибка запроса encarId=${encarId}: ${error.message}`
+                );
+                await this.delay(1000);
+            }
+        }
+
+        return { carIds: encarIds };
+    }
+
+    private delay(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async findNewCars() {
+        const maxEncarId = await this.findMaxEncarId();
+        const encarIds: FetchCarDto = await this.findEncarIds(
+            Number(maxEncarId)
+        );
+
+        console.log(` Найдено ${encarIds.carIds.length} новых машин`);
+
+        return { message: `Найдено ${encarIds.carIds.length} новых машин` };
+    }
+
+    async deleteEmptyPhotos() {
+        const photos = await this.carPhoto.findAll();
+
+        for (const photo of photos) {
+            if (!photo.photo) {
+                await photo.destroy();
+            }
+        }
+    }
+
+    async deleteEmptyOptions() {
+        const options = await this.carOption.findAll();
+
+        for (const option of options) {
+            if (!option.option) {
+                await option.destroy();
+            }
+        }
+    }
+
+    onModuleInit() {
+        this.deleteEmptyPhotos();
+        this.deleteEmptyOptions();
+    }
 }

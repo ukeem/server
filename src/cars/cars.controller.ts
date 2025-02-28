@@ -55,6 +55,13 @@ export class CarsController {
 
     @UseGuards(AuthGuard, RoleGuard)
     @Roles("ADMIN")
+    @Post("find")
+    async findNewCars() {
+        return this.carsService.findNewCars();
+    }
+
+    @UseGuards(AuthGuard, RoleGuard)
+    @Roles("ADMIN")
     @Delete(":id")
     async deleteCar(@Param("id") id: string) {
         return this.carsService.deleteCar(Number(id));
