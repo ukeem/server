@@ -28,10 +28,10 @@ export class CarsController {
         return this.carsService.filterCars(filterDto);
     }
 
-    // @Get()
-    // async getAllCars() {
-    //     return this.carsService.getAllCars();
-    // }
+    @Get("getfilter")
+    async getAllCarsForFilter() {
+        return this.carsService.getAllCarsForFilter();
+    }
 
     @Get()
     async getAllCars(

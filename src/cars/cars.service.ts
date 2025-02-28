@@ -24,8 +24,6 @@ import { UpdateCarDto } from "./dto/update-car.dto";
 import * as fs from "fs";
 import * as path from "path";
 import { Exchange } from "src/exchange/exchange.model";
-import { Literal } from "sequelize/types/utils";
-import e from "express";
 
 @Injectable()
 export class CarsService {
@@ -805,6 +803,70 @@ export class CarsService {
 
             console.log("Найдено машин:", cars.length);
 
+            // const exchangeRate = await this.exchange.findOne({
+            //     where: { courseId: 1 },
+            // });
+
+            // if (!exchangeRate?.course) {
+            //     throw new HttpException(
+            //         "Курс валюты не найден в БД",
+            //         HttpStatus.BAD_REQUEST
+            //     );
+            // }
+
+            // const course = Number(exchangeRate.course);
+
+            // // Преобразуем цены и возвращаем обновленный список машин
+            // cars.forEach((car) => {
+            //     car.setDataValue(
+            //         "price",
+            //         Math.round((car.price * course + 500000) / 100000) * 100000
+            //     );
+            // });
+
+            return cars;
+        } catch (error) {
+            throw new HttpException(
+                `Ошибка getAllCars: ${error.message}`,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    async getAllCarsForFilter() {
+        try {
+            const cars = await this.carModel.findAll({
+                attributes: ["mileage", "clazz", "year", "price"],
+                include: [
+                    { model: CarBrand, attributes: ["id", "brand"] },
+                    { model: CarBrandModel, attributes: ["id", "model"] },
+                    {
+                        model: CarBrandModelEdition,
+                        attributes: ["id", "edition"],
+                    },
+                    { model: CarFuel, attributes: ["id", "fuel"] },
+                    { model: CarColor, attributes: ["id", "color"] },
+                    { model: CarEngine, attributes: ["id", "engine"] },
+                    { model: CarBody, attributes: ["id", "body"] },
+                    {
+                        model: CarTransmission,
+                        attributes: ["id", "transmission"],
+                    },
+                    {
+                        model: CarOption,
+                        attributes: ["id", "option"],
+                        through: { attributes: [] }, // Убираем данные из таблицы связки many-to-many
+                    },
+                ],
+            });
+
+            if (cars.length === 0) {
+                // throw new HttpException("Авто не найдены", HttpStatus.ACCEPTED);
+                return [];
+            }
+
+            console.log("Найдено машин:", cars.length);
+
             const exchangeRate = await this.exchange.findOne({
                 where: { courseId: 1 },
             });
@@ -829,7 +891,7 @@ export class CarsService {
             return cars;
         } catch (error) {
             throw new HttpException(
-                `Ошибка getAllCars: ${error.message}`,
+                `Ошибка getAllCarsForFilter: ${error.message}`,
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
