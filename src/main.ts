@@ -20,6 +20,7 @@ async function start() {
 
     app.use(cors());
 
+    app.use("/data", express.static(path.join(__dirname, "..", "data")));
     app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
     await app.listen(PORT ?? 5000, () => {
