@@ -843,6 +843,7 @@ export class CarsService {
                     "year",
                     "price",
                     "encarId",
+                    "createdAt",
                 ],
                 include: [
                     { model: CarBrand, attributes: ["id", "brand"] },
