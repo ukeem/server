@@ -836,7 +836,14 @@ export class CarsService {
     async getAllCarsForFilter() {
         try {
             const cars = await this.carModel.findAll({
-                attributes: ["mileage", "clazz", "year", "price"],
+                attributes: [
+                    "id",
+                    "mileage",
+                    "clazz",
+                    "year",
+                    "price",
+                    "encarId",
+                ],
                 include: [
                     { model: CarBrand, attributes: ["id", "brand"] },
                     { model: CarBrandModel, attributes: ["id", "model"] },
