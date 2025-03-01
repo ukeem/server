@@ -1272,7 +1272,7 @@ export class CarsService {
                 const formYear = response?.category?.formYear;
                 const diagnosisCar = response?.advertisement?.diagnosisCar;
 
-                if (formYear && formYear > 2020 && diagnosisCar === true) {
+                if (formYear && formYear >= 2020 && diagnosisCar === true) {
                     await this.fetchCar(encarId.toString());
                     encarIds.push(encarId.toString());
                 }
