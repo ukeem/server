@@ -1260,7 +1260,7 @@ export class CarsService {
         const encarIds: string[] = [];
         let errorCount = 0;
 
-        while (errorCount < 50) {
+        while (errorCount < 100) {
             encarId++;
 
             try {
