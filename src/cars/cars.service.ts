@@ -1282,7 +1282,7 @@ export class CarsService {
                 console.error(
                     `Ошибка запроса encarId=${encarId}: ${error.message}`
                 );
-                await this.delay(1000);
+                await this.delay(100);
             }
         }
 
