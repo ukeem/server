@@ -563,7 +563,7 @@ export class CarsService {
     }
 
     async filterCars(filterDto: FilterCarDto) {
-        console.log(filterDto);
+        // console.log(filterDto);
 
         try {
             const {
@@ -821,11 +821,11 @@ export class CarsService {
 
             // Подсчет машин по фильтру
             const countCar = await this.carModel.count({ where });
-            console.log(` Найдено ${countCar} по фильтру`);
+            // console.log(` Найдено ${countCar} по фильтру`);
 
             return countCar;
         } catch (error) {
-            console.error("Ошибка filterCountCars:", error);
+            // console.error("Ошибка filterCountCars:", error);
             throw new HttpException(
                 {
                     message: `Ошибка filterCountCars: ${error.message}`,
