@@ -18,6 +18,8 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { RoleGuard } from "src/role/role.guard";
 import { Roles } from "src/role/role.decorator";
 import { UpdateCarDto } from "./dto/update-car.dto";
+import { BrandIdsDto } from "./dto/brand-dto";
+import { BrandIdsAndModelIdsDto } from "./dto/edition-dto";
 
 @Controller("cars")
 export class CarsController {
@@ -28,9 +30,74 @@ export class CarsController {
         return this.carsService.filterCars(filterDto);
     }
 
+    @Post("count")
+    async filterCountCars(@Body() filterDto: FilterCarDto) {
+        return this.carsService.filterCountCars(filterDto);
+    }
     @Get("getfilter")
     async getAllCarsForFilter() {
         return this.carsService.getAllCarsForFilter();
+    }
+
+    @Get("count-all")
+    async getCountCars() {
+        return this.carsService.getCountCars();
+    }
+
+    @Get("brands")
+    async getBrands() {
+        return this.carsService.getBrands();
+    }
+
+    @Post("models")
+    async getModelsByBrandIds(@Body() dto: BrandIdsDto) {
+        return this.carsService.getModelsByBrandIds(dto);
+    }
+
+    @Post("editions")
+    async getEditionsByModelIds(@Body() dto: BrandIdsAndModelIdsDto) {
+        return this.carsService.getEditionsByModelIds(dto);
+    }
+
+    @Get("min-max-year")
+    async getMinMaxYear() {
+        return this.carsService.getMinMaxYear();
+    }
+    @Get("min-max-engine")
+    async getMinMaxEngine() {
+        return this.carsService.getMinMaxEngine();
+    }
+
+    @Get("min-max-mileage")
+    async getMinMaxMileage() {
+        return this.carsService.getMinMaxMileage();
+    }
+    @Get("min-max-price")
+    async getMinMaxPrice() {
+        return this.carsService.getMinMaxPrice();
+    }
+
+    @Get("transmissions")
+    async getTransmissions() {
+        return this.carsService.getTransmissions();
+    }
+
+    @Get("fuel")
+    async getFuel() {
+        return this.carsService.getFuel();
+    }
+    @Get("color")
+    async getColor() {
+        return this.carsService.getColor();
+    }
+    @Get("body")
+    async getBodies() {
+        return this.carsService.getBodies();
+    }
+
+    @Get("option")
+    async getOptions() {
+        return this.carsService.getOptions();
     }
 
     @Get()

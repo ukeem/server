@@ -24,6 +24,8 @@ import { UpdateCarDto } from "./dto/update-car.dto";
 import * as fs from "fs";
 import * as path from "path";
 import { Exchange } from "src/exchange/exchange.model";
+import { BrandIdsDto } from "./dto/brand-dto";
+import { BrandIdsAndModelIdsDto } from "./dto/edition-dto";
 
 @Injectable()
 export class CarsService {
@@ -561,6 +563,8 @@ export class CarsService {
     }
 
     async filterCars(filterDto: FilterCarDto) {
+        console.log(filterDto);
+
         try {
             const {
                 minMileage,
@@ -578,107 +582,92 @@ export class CarsService {
                 colorIds,
                 bodyIds,
                 transmissionIds,
-                limit,
-                offset,
+                encarId,
+                limit = 9999,
+                offset = 0,
                 orderKey = "createdAt",
                 orderValue = "DESC",
-                encarId,
             } = filterDto;
+
+            const exchangeRate = await this.exchange.findOne({
+                where: { courseId: 1 },
+            });
+
+            if (!exchangeRate?.course) {
+                throw new HttpException(
+                    "Курс валюты не найден в БД",
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            const course = Number(exchangeRate.course);
 
             const where: any = {};
 
-            if (minMileage || maxMileage) {
+            // Пробег
+            if (minMileage !== undefined || maxMileage !== undefined) {
                 where.mileage = {};
-                if (minMileage) where.mileage[Op.gte] = minMileage;
-                if (maxMileage) where.mileage[Op.lte] = maxMileage;
+                if (minMileage !== undefined)
+                    where.mileage[Op.gte] = minMileage;
+                if (maxMileage !== undefined)
+                    where.mileage[Op.lte] = maxMileage;
             }
 
-            if (minYear != undefined || maxYear != undefined) {
+            // Год выпуска
+            if (minYear !== undefined || maxYear !== undefined) {
                 where.year = {};
-                if (minYear != undefined) where.year[Op.gte] = minYear;
-                if (maxYear != undefined) where.year[Op.lte] = maxYear;
+                if (minYear !== undefined) where.year[Op.gte] = minYear;
+                if (maxYear !== undefined) where.year[Op.lte] = maxYear;
             }
 
-            if (minPrice != undefined || maxPrice != undefined) {
+            // Цена
+            if (minPrice !== undefined || maxPrice !== undefined) {
                 where.price = {};
-                if (minPrice != undefined) where.price[Op.gte] = minPrice;
-                if (maxPrice != undefined) where.price[Op.lte] = maxPrice;
+                if (minPrice !== undefined)
+                    where.price[Op.gte] = (minPrice - 500000) / course;
+                if (maxPrice !== undefined)
+                    where.price[Op.lte] = (maxPrice - 500000) / course;
             }
 
-            // Двигатель
-            if (minEngine !== undefined || maxEngine !== undefined) {
-                where.engineId = new Set(); // Используем Set для устранения дублей
+            // Двигатель (по ID)
+            if (minEngine || maxEngine) {
+                const engineWhere: any = {};
+                if (minEngine) engineWhere[Op.gte] = minEngine;
+                if (maxEngine) engineWhere[Op.lte] = maxEngine;
 
-                if (minEngine !== undefined) {
-                    const minEngineCars = await this.carEngine.findAll({
-                        where: { engine: { [Op.gte]: minEngine } },
-                    });
+                const engineIds = await this.carEngine.findAll({
+                    attributes: ["id"],
+                    where: { engine: engineWhere },
+                });
 
-                    minEngineCars.forEach((engine) =>
-                        where.engineId.add(engine.id)
-                    );
-                }
-
-                if (maxEngine !== undefined) {
-                    const maxEngineCars = await this.carEngine.findAll({
-                        where: { engine: { [Op.lte]: maxEngine } },
-                    });
-
-                    maxEngineCars.forEach((engine) =>
-                        where.engineId.add(engine.id)
-                    );
-                }
-
-                if (where.engineId.size > 0) {
-                    where.engineId = { [Op.in]: Array.from(where.engineId) };
-                } else {
-                    delete where.engineId;
+                const engineIdList = engineIds.map((e) => e.id);
+                if (engineIdList.length > 0) {
+                    where.engineId = { [Op.in]: engineIdList };
                 }
             }
 
-            // Бренд
-            if (brandIds) {
+            // Фильтрация по массивам
+            if (brandIds && brandIds.length > 0)
                 where.brandId = { [Op.in]: brandIds };
-            }
-
-            // Модель
-            if (modelIds) {
+            if (modelIds && modelIds.length > 0)
                 where.modelId = { [Op.in]: modelIds };
-            }
-
-            // Комплектация
-            if (editionIds) {
+            if (editionIds && editionIds.length > 0)
                 where.editionId = { [Op.in]: editionIds };
-            }
-
-            // Топливо
-            if (fuelIds) {
+            if (fuelIds && fuelIds.length > 0)
                 where.fuelId = { [Op.in]: fuelIds };
-            }
-
-            // Цвет
-            if (colorIds) {
+            if (colorIds && colorIds.length > 0)
                 where.colorId = { [Op.in]: colorIds };
-            }
-
-            // Кузов
-            if (bodyIds) {
+            if (bodyIds && bodyIds.length > 0)
                 where.bodyId = { [Op.in]: bodyIds };
-            }
-
-            // Коробка передач
-            if (transmissionIds) {
+            if (transmissionIds && transmissionIds.length > 0)
                 where.transmissionId = { [Op.in]: transmissionIds };
-            }
 
-            // Коробка передач
+            // encarId
             if (encarId) {
-                where.encarId;
+                where.encarId = encarId;
             }
 
-            // Запрос в БД
             const cars = await this.carModel.findAll({
-                where,
                 attributes: [
                     "id",
                     "encarId",
@@ -706,24 +695,57 @@ export class CarsService {
                     {
                         model: CarOption,
                         attributes: ["id", "option"],
-                        through: { attributes: [] },
-                    }, // Убираем данные из таблицы связки many-to-many
+                        through: { attributes: [] }, // Убираем данные из таблицы связки many-to-many
+                    },
                     { model: CarPhoto, attributes: ["id", "photo"] },
                 ],
-                limit: limit ? Number(limit) : undefined,
-                offset: offset ? Number(offset) : undefined,
+                where,
                 order: [[orderKey, orderValue]],
+                limit: limit,
+                offset: offset,
             });
 
-            if (cars.length === 0) {
-                throw new HttpException(
-                    {
-                        message: "Авто не найдены",
-                        statusCode: HttpStatus.NOT_FOUND,
-                    },
-                    HttpStatus.NOT_FOUND
+            console.log("Найдено авто:", cars.length);
+
+            cars.forEach((car) => {
+                car.setDataValue(
+                    "price",
+                    Math.round((car.price * course + 500000) / 100000) * 100000
                 );
-            }
+            });
+            console.log(cars);
+
+            return cars;
+        } catch (error) {
+            throw new HttpException(
+                {
+                    message: `Ошибка filterCars: ${error.message}`,
+                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    async filterCountCars(filterDto: FilterCarDto) {
+        try {
+            const {
+                minMileage,
+                maxMileage,
+                minYear,
+                maxYear,
+                minPrice,
+                maxPrice,
+                minEngine,
+                maxEngine,
+                brandIds = [],
+                modelIds = [],
+                editionIds = [],
+                fuelIds = [],
+                colorIds = [],
+                bodyIds = [],
+                transmissionIds = [],
+            } = filterDto;
 
             const exchangeRate = await this.exchange.findOne({
                 where: { courseId: 1 },
@@ -738,20 +760,75 @@ export class CarsService {
 
             const course = Number(exchangeRate.course);
 
-            // Преобразуем цены и возвращаем обновленный список машин
-            cars.forEach((car) => {
-                car.setDataValue(
-                    "price",
-                    Math.round((car.price * course + 500000) / 100000) * 100000
-                );
-            });
+            const where: any = {};
 
-            console.log("Найдено машин:", cars.length);
-            return cars;
+            // Пробег
+            if (minMileage !== undefined || maxMileage !== undefined) {
+                where.mileage = {};
+                if (minMileage !== undefined)
+                    where.mileage[Op.gte] = minMileage;
+                if (maxMileage !== undefined)
+                    where.mileage[Op.lte] = maxMileage;
+            }
+
+            // Год выпуска
+            if (minYear !== undefined || maxYear !== undefined) {
+                where.year = {};
+                if (minYear !== undefined) where.year[Op.gte] = minYear;
+                if (maxYear !== undefined) where.year[Op.lte] = maxYear;
+            }
+
+            // Цена
+            if (minPrice !== undefined || maxPrice !== undefined) {
+                where.price = {};
+                if (minPrice !== undefined)
+                    where.price[Op.gte] = Math.round(
+                        (minPrice - 500000) / course
+                    );
+                if (maxPrice !== undefined)
+                    where.price[Op.lte] = Math.round(
+                        (maxPrice - 500000) / course
+                    );
+            }
+
+            // Двигатель (по ID)
+            if (minEngine || maxEngine) {
+                const engineWhere: any = {};
+                if (minEngine) engineWhere[Op.gte] = minEngine;
+                if (maxEngine) engineWhere[Op.lte] = maxEngine;
+
+                const engineIds = await this.carEngine.findAll({
+                    attributes: ["id"],
+                    where: { engine: engineWhere },
+                });
+
+                const engineIdList = engineIds.map((e) => e.id);
+                if (engineIdList.length > 0) {
+                    where.engineId = { [Op.in]: engineIdList };
+                }
+            }
+
+            // Фильтрация по массивам
+            if (brandIds.length > 0) where.brandId = { [Op.in]: brandIds };
+            if (modelIds.length > 0) where.modelId = { [Op.in]: modelIds };
+            if (editionIds.length > 0)
+                where.editionId = { [Op.in]: editionIds };
+            if (fuelIds.length > 0) where.fuelId = { [Op.in]: fuelIds };
+            if (colorIds.length > 0) where.colorId = { [Op.in]: colorIds };
+            if (bodyIds.length > 0) where.bodyId = { [Op.in]: bodyIds };
+            if (transmissionIds.length > 0)
+                where.transmissionId = { [Op.in]: transmissionIds };
+
+            // Подсчет машин по фильтру
+            const countCar = await this.carModel.count({ where });
+            console.log(` Найдено ${countCar} по фильтру`);
+
+            return countCar;
         } catch (error) {
+            console.error("Ошибка filterCountCars:", error);
             throw new HttpException(
                 {
-                    message: `Ошибка filterCars: ${error.message}`,
+                    message: `Ошибка filterCountCars: ${error.message}`,
                     statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
                 },
                 HttpStatus.INTERNAL_SERVER_ERROR
@@ -803,26 +880,26 @@ export class CarsService {
 
             console.log("Найдено машин:", cars.length);
 
-            // const exchangeRate = await this.exchange.findOne({
-            //     where: { courseId: 1 },
-            // });
+            const exchangeRate = await this.exchange.findOne({
+                where: { courseId: 1 },
+            });
 
-            // if (!exchangeRate?.course) {
-            //     throw new HttpException(
-            //         "Курс валюты не найден в БД",
-            //         HttpStatus.BAD_REQUEST
-            //     );
-            // }
+            if (!exchangeRate?.course) {
+                throw new HttpException(
+                    "Курс валюты не найден в БД",
+                    HttpStatus.BAD_REQUEST
+                );
+            }
 
-            // const course = Number(exchangeRate.course);
+            const course = Number(exchangeRate.course);
 
-            // // Преобразуем цены и возвращаем обновленный список машин
-            // cars.forEach((car) => {
-            //     car.setDataValue(
-            //         "price",
-            //         Math.round((car.price * course + 500000) / 100000) * 100000
-            //     );
-            // });
+            // Преобразуем цены и возвращаем обновленный список машин
+            cars.forEach((car) => {
+                car.setDataValue(
+                    "price",
+                    Math.round((car.price * course + 500000) / 100000) * 100000
+                );
+            });
 
             return cars;
         } catch (error) {
@@ -1056,81 +1133,222 @@ export class CarsService {
         }
     }
 
-    // async deleteDublicate() {
-    //     const duplicates = await this.carModel.findAll({
-    //         attributes: [
-    //             "brandId",
-    //             "modelId",
-    //             "editionId",
-    //             "colorId",
-    //             "transmissionId",
-    //             "clazz",
-    //             [Sequelize.fn("COUNT", Sequelize.col("id")), "count"],
-    //         ],
-    //         group: [
-    //             "brandId",
-    //             "modelId",
-    //             "editionId",
-    //             "colorId",
-    //             "transmissionId",
-    //             "clazz",
-    //         ],
-    //         having: Sequelize.literal("COUNT(id) > 1"),
-    //     });
+    async getCountCars() {
+        return await this.carModel.count();
+    }
 
-    //     let totalDeletedCars = 0;
-    //     let totalDeletedPhotos = 0;
+    async getBrands() {
+        const brands = await this.carBrand.findAll({
+            attributes: ["id", "brand"],
+        });
 
-    //     for (const dup of duplicates) {
-    //         const {
-    //             brandId,
-    //             modelId,
-    //             editionId,
-    //             colorId,
-    //             clazz,
-    //             transmissionId,
-    //         } = dup.get();
+        if (!brands.length) {
+            throw new HttpException(
+                {
+                    message: "Производители не найдены",
+                    statusCode: HttpStatus.NOT_FOUND,
+                },
+                HttpStatus.NOT_FOUND
+            );
+        }
 
-    //         // Получаем все дублирующиеся автомобили, сортируя их по id
-    //         const carsToDelete = await this.carModel.findAll({
-    //             where: {
-    //                 brandId,
-    //                 modelId,
-    //                 editionId,
-    //                 colorId,
-    //                 clazz,
-    //                 transmissionId,
-    //             },
-    //             order: [["id", "ASC"]],
-    //             attributes: ["id"],
-    //         });
+        return brands;
+    }
 
-    //         if (carsToDelete.length > 1) {
-    //             // Оставляем первый, остальные удаляем
-    //             const idsToDelete = carsToDelete.slice(1).map((car) => car.id);
+    async getModelsByBrandIds(dto: BrandIdsDto) {
+        const { brandIds } = dto;
+        // ✅ Проверяем, что brandIds - массив и не пустой
+        if (!Array.isArray(brandIds) || brandIds.length === 0) {
+            throw new HttpException(
+                {
+                    message:
+                        "brandIds должен быть массивом с хотя бы одним значением",
+                    statusCode: HttpStatus.BAD_REQUEST,
+                },
+                HttpStatus.BAD_REQUEST
+            );
+        }
 
-    //             // Считаем количество удаляемых фото
-    //             const deletedPhotos = await this.carPhoto.destroy({
-    //                 where: { carId: idsToDelete },
-    //             });
+        const models = await this.carBrand.findAll({
+            attributes: ["brand"],
+            include: [{ model: CarBrandModel, attributes: ["id", "model"] }],
+            where: {
+                id: { [Op.in]: brandIds },
+            },
+        });
 
-    //             const deletedCars = await this.carModel.destroy({
-    //                 where: { id: idsToDelete },
-    //             });
+        if (models.length === 0) {
+            throw new HttpException(
+                {
+                    message: "Модели не найдены",
+                    statusCode: HttpStatus.NOT_FOUND,
+                },
+                HttpStatus.NOT_FOUND
+            );
+        }
 
-    //             totalDeletedCars += deletedCars;
-    //             totalDeletedPhotos += deletedPhotos;
+        return models;
+    }
 
-    //             console.log(
-    //                 `Удалено ${deletedCars} авто и ${deletedPhotos} фото (brandId: ${brandId}, modelId: ${modelId}, editionId: ${editionId})`
-    //             );
-    //         }
-    //     }
+    async getEditionsByModelIds(dto: BrandIdsAndModelIdsDto) {
+        const { brandIds, modelIds } = dto;
 
-    //     console.log(
-    //         `ИТОГО: удалено ${totalDeletedCars} авто и ${totalDeletedPhotos} фото`
-    //     );
-    // }
+        // 1. Получаем бренды и их модели
+        const brandsAndModels = await this.carBrand.findAll({
+            attributes: ["id", "brand"],
+            include: [
+                {
+                    model: CarBrandModel,
+                    as: "models",
+                    attributes: ["id", "model"],
+                },
+            ],
+            where: { id: { [Op.in]: brandIds } },
+        });
+
+        // 2. Получаем модели и их поколения
+        const modelsAndEditions = await this.carBrandModel.findAll({
+            attributes: ["id", "model"],
+            include: [
+                {
+                    model: CarBrandModelEdition,
+                    as: "editions",
+                    attributes: ["id", "edition"],
+                },
+            ],
+            where: { id: { [Op.in]: modelIds } },
+        });
+
+        // 3. Формируем результат
+        const result = brandsAndModels
+            .map(({ models }) =>
+                models.map(({ id, model }) => {
+                    const foundModel = modelsAndEditions.find(
+                        (m) => m.id === id
+                    );
+                    return {
+                        model, // Название модели
+                        editions:
+                            foundModel?.editions?.map(({ id, edition }) => ({
+                                id,
+                                edition,
+                            })) || [], // Если нет editions, подставляем пустой массив
+                    };
+                })
+            )
+            .flat(); // Объединяем вложенные массивы
+
+        return result;
+    }
+
+    async getMinMaxYear() {
+        const minYear = await this.carModel.min("year");
+        const maxYear = await this.carModel.max("year");
+        if (!minYear || !maxYear) {
+            throw new HttpException(
+                {
+                    message: "Года не найдены",
+                    statusCode: HttpStatus.NOT_FOUND,
+                },
+                HttpStatus.NOT_FOUND
+            );
+        }
+        return { minYear, maxYear };
+    }
+
+    async getMinMaxEngine() {
+        // const minEngine = await this.carEngine.min("engine");
+        const maxEngine = await this.carEngine.max("engine");
+
+        return { maxEngine };
+    }
+
+    async getMinMaxMileage() {
+        // const minEngine = await this.carEngine.min("engine");
+        const maxMileage = await this.carModel.max("mileage");
+
+        return { maxMileage };
+    }
+
+    async getMinMaxPrice() {
+        const minPrice = await this.carModel.min("price");
+        const maxPrice = await this.carModel.max("price");
+        if (!minPrice || !maxPrice) {
+            throw new HttpException(
+                {
+                    message: "Года не найдены",
+                    statusCode: HttpStatus.NOT_FOUND,
+                },
+                HttpStatus.NOT_FOUND
+            );
+        }
+
+        const exchangeRate = await this.exchange.findOne({
+            where: { courseId: 1 },
+        });
+
+        if (!exchangeRate?.course) {
+            throw new HttpException(
+                "Курс валюты не найден в БД",
+                HttpStatus.BAD_REQUEST
+            );
+        }
+
+        const course = Number(exchangeRate.course);
+
+        return {
+            minPrice: Math.round(+minPrice * course),
+            maxPrice: Math.round(+maxPrice * course),
+        };
+    }
+
+    async getTransmissions() {
+        const transmissions = await this.carTransmission.findAll({
+            attributes: [
+                [
+                    Sequelize.fn("DISTINCT", Sequelize.col("transmission")),
+                    "transmission",
+                ],
+            ],
+        });
+
+        return transmissions.map((t) => t.transmission); // Возвращаем массив уникальных значений
+    }
+
+    async getFuel() {
+        const fuels = await this.carFuel.findAll({
+            attributes: ["id", "fuel"], // Запрашиваем и id, и fuel
+            // group: ["id", "fuel"], // Группируем по id и fuel
+            // order: [["fuel", "ASC"]], // Можно сортировать по названию топлива
+        });
+
+        return fuels; // Возвращаем массив объектов
+    }
+
+    async getColor() {
+        const colors = await this.carColor.findAll({
+            attributes: ["id", "color"],
+        });
+
+        return colors; // Возвращаем массив уникальных значений
+    }
+
+    async getBodies() {
+        const bodies = await this.carBody.findAll({
+            attributes: ["id", "body"],
+        });
+
+        return bodies; // Возвращаем массив уникальных значений
+    }
+
+    async getOptions() {
+        const options = await this.carOption.findAll({
+            attributes: ["id", "option"],
+        });
+
+        return options; // Возвращаем массив уникальных значений
+    }
+
     async deleteDublicate() {
         const duplicates = await this.carModel.findAll({
             attributes: [
