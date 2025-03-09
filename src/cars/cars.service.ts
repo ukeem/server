@@ -713,7 +713,7 @@ export class CarsService {
                     Math.round((car.price * course + 500000) / 100000) * 100000
                 );
             });
-            console.log(cars);
+            // console.log(cars);
 
             return cars;
         } catch (error) {
